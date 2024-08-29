@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type DataListGames struct {
@@ -44,10 +46,6 @@ var dataPage = Page{
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("rootHandler")
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
 	tmpl := template.Must(template.ParseFiles("index.html"))
 	tmpl.ExecuteTemplate(w, "index", dataListGames)
 }
@@ -59,17 +57,23 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "game", book.Pages["1"])
 }
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "404 page not found", http.StatusNotFound)
+func badRouteHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("badRouteHandler")
+	w.Header().Set("HX-Retarget", "body")
+	w.WriteHeader(http.StatusNotFound)
+	tmpl := template.Must(template.ParseFiles("notfound.html"))
+	tmpl.Execute(w, nil)
 }
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", rootHandler)
-	mux.HandleFunc("GET /play/{bookName}", playHandler)
+	r := chi.NewRouter()
+	r.Get("/", rootHandler)
+	r.Get("/{badRoute}", badRouteHandler)
+	r.Get("/play/{bookName}", playHandler)
+	r.NotFound(badRouteHandler)
 
 	log.Println("Server is starting...")
-	check(http.ListenAndServe(":8080", mux))
+	check(http.ListenAndServe(":8080", r))
 }
 
 func check(err error) {
