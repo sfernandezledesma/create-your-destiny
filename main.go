@@ -61,14 +61,13 @@ func badRouteHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("badRouteHandler")
 	w.Header().Set("HX-Retarget", "body")
 	w.WriteHeader(http.StatusNotFound)
-	tmpl := template.Must(template.ParseFiles("notfound.html"))
-	tmpl.Execute(w, nil)
+	tmpl := template.Must(template.ParseFiles("index.html"))
+	tmpl.ExecuteTemplate(w, "notfound", nil)
 }
 
 func main() {
 	r := chi.NewRouter()
 	r.Get("/", rootHandler)
-	r.Get("/{badRoute}", badRouteHandler)
 	r.Get("/play/{bookName}", playHandler)
 	r.NotFound(badRouteHandler)
 

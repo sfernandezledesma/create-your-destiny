@@ -12,24 +12,33 @@
     <meta name="htmx-config" content='{"responseHandling": [{"code":".*", "swap": true}]}' /> <!--all responses are swapped-->
     <title>Create your Destiny</title>
 </head>
-<body>
-    <h2>Choose your Destiny</h2>
-    <div id="main">
-        <div>
-            Your games:
-            <ul>
-                {{ range .UserGames }}
-                    <li>{{ . }} <button hx-target="#main" hx-get="/play/{{ . }}">Play</button><button>Edit</button></li>
-                {{ end }}
-            </ul>
-        </div>
-        <div>
-            Games from others:
-            <ul>
-                {{ range .OthersGames }}
-                    <li>{{ . }} <button hx-target="#main" hx-get="/play/{{ . }}">Play</button></li>
-                {{ end }}
-            </ul>
+<body class="container-fluid bg-dark text-white" id="main">
+    <h2 class="text-center">Create your Destiny</h2>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-6">
+                <h5 class="text-center">Your games</h5>
+                <div>
+                    {{ range .UserGames }}
+                        <div>
+                            <button hx-target="#main" hx-get="/play/{{ . }}" class="btn btn-success">Play</button>
+                            <button class="btn btn-warning">Edit</button>
+                            {{ . }} 
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
+            <div class="col-6">
+                <h5 class="text-center">Games from others</h5>
+                <div>
+                    {{ range .OthersGames }}
+                        <div>
+                            <button hx-target="#main" hx-get="/play/{{ . }}" class="btn btn-success">Play</button>
+                            {{ . }} 
+                        </div>
+                    {{ end }}
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -42,11 +51,19 @@
         <p>{{ .Text }}</p>
     </div>
     <div>
-        <ul>
+        <div class="d-grid gap-3">
             {{ range .Options }}
-                <li><button hx-target="#game" hx-get="/goto/{{ .Destination }}">{{ .Text }}</button></li>
+                <button hx-target="#game" hx-get="/goto/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+                    {{ .Text }}
+                </button>
             {{ end }}
-        </ul>
+        </div>
     </div>
+</div>
+{{ end }}
+
+{{ block "notfound" . }}
+<div class="alert alert-danger">
+    Not found
 </div>
 {{ end }}
