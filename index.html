@@ -1,3 +1,4 @@
+{{ block "index" . }}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,22 +12,40 @@
     <title>Create your Destiny</title>
 </head>
 <body>
-    <h1>Choose your Destiny</h1>
-    <div>
-        Your games:
-        <ul>
-            {{ range .UserGames }}
-                <li>{{ . }} <button>Edit</button><button>Play</button></li>
-            {{ end }}
-        </ul>
-    </div>
-    <div>
-        Games from others:
-        <ul>
-            {{ range .OthersGames }}
-                <li>{{ . }} <button>Play</button></li>
-            {{ end }}
-        </ul>
+    <h2>Choose your Destiny</h2>
+    <div id="main">
+        <div>
+            Your games:
+            <ul>
+                {{ range .UserGames }}
+                    <li>{{ . }} <button hx-target="#main" hx-get="/play/{{ . }}">Play</button><button>Edit</button></li>
+                {{ end }}
+            </ul>
+        </div>
+        <div>
+            Games from others:
+            <ul>
+                {{ range .OthersGames }}
+                    <li>{{ . }} <button hx-target="#main" hx-get="/play/{{ . }}">Play</button></li>
+                {{ end }}
+            </ul>
+        </div>
     </div>
 </body>
 </html>
+{{ end }}
+
+{{ block "game" . }}
+<div id="game">
+    <div>
+        <p>{{ .Text }}</p>
+    </div>
+    <div>
+        <ul>
+            {{ range .Options }}
+                <li><button hx-target="#game" hx-get="/goto/{{ .Destination }}">{{ .Text }}</button></li>
+            {{ end }}
+        </ul>
+    </div>
+</div>
+{{ end }}
