@@ -1,11 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DataListGames struct {
@@ -85,12 +89,39 @@ func main() {
 	r.Get("/play/{bookName}/{pageNumber}", playHandler)
 	r.NotFound(badRouteHandler)
 
+	// Testing SQLite
+	db, err := sql.Open("sqlite3", "app.db")
+	check(err)
+	rows, err := db.Query("SELECT * FROM USER;")
+	check(err)
+	defer rows.Close()
+	for rows.Next() {
+		var name, h string
+		check(rows.Scan(&name, &h))
+		log.Println(name, h)
+		checkPassword("asd123", h)
+	}
+
+	// Testing bcrypt
+	passwd := "HelloWorld!"
+	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.MinCost)
+	check(err)
+	checkPassword(passwd, string(hash))
+
 	log.Println("Server is starting...")
 	check(http.ListenAndServe(":8080", r))
 }
 
 func check(err error) {
 	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func checkPassword(passwd string, hash string) {
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(passwd)); err == nil {
+		log.Println("Password and hash comparison successful!")
+	} else {
 		log.Fatal(err)
 	}
 }
