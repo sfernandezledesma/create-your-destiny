@@ -12,17 +12,17 @@
     <meta name="htmx-config" content='{"responseHandling": [{"code":".*", "swap": true}]}' /> <!--all responses are swapped-->
     <title>Create your Destiny</title>
 </head>
-<body class="container-fluid bg-dark text-white" id="main">
+<body class="container bg-dark text-white" id="main">
     <h2 class="text-center">Create your Destiny</h2>
-    <div class="container-fluid">
+    <div>
         <div class="row">
             <div class="col-6">
                 <h5 class="text-center">Your games</h5>
                 <div>
                     {{ range .UserGames }}
                         <div>
-                            <button hx-target="#main" hx-get="/play/{{ . }}" class="btn btn-success">Play</button>
-                            <button class="btn btn-warning">Edit</button>
+                            <button hx-target="#main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
+                            <button class="btn btn-primary">Edit</button>
                             {{ . }} 
                         </div>
                     {{ end }}
@@ -33,7 +33,7 @@
                 <div>
                     {{ range .OthersGames }}
                         <div>
-                            <button hx-target="#main" hx-get="/play/{{ . }}" class="btn btn-success">Play</button>
+                            <button hx-target="#main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
                             {{ . }} 
                         </div>
                     {{ end }}
@@ -46,14 +46,15 @@
 {{ end }}
 
 {{ block "game" . }}
-<div id="game">
+<div id="game" class="container p-5">
+    <h4 class="text-center">{{ .Name }}</h4>
     <div>
-        <p>{{ .Text }}</p>
+        <p>{{ .Page.Text }}</p>
     </div>
     <div>
         <div class="d-grid gap-3">
-            {{ range .Options }}
-                <button hx-target="#game" hx-get="/goto/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+            {{ range .Page.Options }}
+                <button hx-target="#main" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
                     {{ .Text }}
                 </button>
             {{ end }}
