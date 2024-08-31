@@ -83,21 +83,44 @@ func badRouteHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "notfound", nil)
 }
 
+func registerFormHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("registerFormHandler")
+	tmpl := template.Must(template.ParseFiles("assets/register.html"))
+	tmpl.ExecuteTemplate(w, "index", nil)
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("registerHandler")
+	r.ParseForm()
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	if username != "" && password != "" { // FIXME: need better validation
+		log.Println(username, password)
+		// TODO: add (username, hash) to DB
+		rootHandler(w, r)
+	} else {
+		tmpl := template.Must(template.ParseFiles("assets/register.html"))
+		tmpl.ExecuteTemplate(w, "index", "An error occurred. Try again.") // TODO: send better errors
+	}
+}
+
 func main() {
 	r := chi.NewRouter()
 	r.Get("/", rootHandler)
 	r.Get("/play/{bookName}/{pageNumber}", playHandler)
+	r.Get("/register", registerFormHandler)
+	r.Post("/register", registerHandler)
 	r.NotFound(badRouteHandler)
 
 	// Testing SQLite
 	db, err := sql.Open("sqlite3", "app.db")
-	check(err)
+	checkError(err)
 	rows, err := db.Query("SELECT * FROM USER;")
-	check(err)
+	checkError(err)
 	defer rows.Close()
 	for rows.Next() {
 		var name, h string
-		check(rows.Scan(&name, &h))
+		checkError(rows.Scan(&name, &h))
 		log.Println(name, h)
 		checkPassword("asd123", h)
 	}
@@ -105,14 +128,14 @@ func main() {
 	// Testing bcrypt
 	passwd := "HelloWorld!"
 	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.MinCost)
-	check(err)
+	checkError(err)
 	checkPassword(passwd, string(hash))
 
 	log.Println("Server is starting...")
-	check(http.ListenAndServe(":8080", r))
+	checkError(http.ListenAndServe(":8080", r))
 }
 
-func check(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
