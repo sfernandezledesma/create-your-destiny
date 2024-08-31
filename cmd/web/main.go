@@ -2,11 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
 	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	_ "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"
 	"golang.org/x/crypto/bcrypt"
@@ -56,61 +55,61 @@ var dataPage = Page{
 	[]Option{
 		{"Go to page 2", "2"},
 		{"Go back to page 1", "1"},
+		{"Go back to page 3", "3"},
 	},
 }
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(c *gin.Context) {
 	log.Println("rootHandler")
-	tmpl := template.Must(template.ParseFiles("assets/index.html"))
-	tmpl.ExecuteTemplate(w, "index", dataListGames)
+	c.HTML(http.StatusOK, "index", dataListGames)
 }
 
-func playHandler(w http.ResponseWriter, r *http.Request) {
+func playHandler(c *gin.Context) {
 	log.Println("playHandler")
-	bookName := r.PathValue("bookName")
-	pageNumber := r.PathValue("pageNumber")
-	page := books[bookName].Pages[pageNumber]
-	data := DataCurrentGame{Name: bookName, Page: page}
-	tmpl := template.Must(template.ParseFiles("assets/index.html"))
-	tmpl.ExecuteTemplate(w, "game", data)
+	bookName := c.Param("bookName")
+	pageNumber := c.Param("pageNumber")
+	page, ok := books[bookName].Pages[pageNumber]
+	if ok {
+		data := DataCurrentGame{Name: bookName, Page: page}
+		c.HTML(http.StatusOK, "game", data)
+	} else {
+		badRouteHandler(c)
+	}
 }
 
-func badRouteHandler(w http.ResponseWriter, r *http.Request) {
+func badRouteHandler(c *gin.Context) {
 	log.Println("badRouteHandler")
-	w.Header().Set("HX-Retarget", "body")
-	w.WriteHeader(http.StatusNotFound)
-	tmpl := template.Must(template.ParseFiles("assets/index.html"))
-	tmpl.ExecuteTemplate(w, "notfound", nil)
+	c.Header("HX-Retarget", "body")
+	c.HTML(http.StatusNotFound, "notfound", nil)
 }
 
-func registerFormHandler(w http.ResponseWriter, r *http.Request) {
+func registerFormHandler(c *gin.Context) {
 	log.Println("registerFormHandler")
-	tmpl := template.Must(template.ParseFiles("assets/register.html"))
-	tmpl.ExecuteTemplate(w, "index", nil)
+	c.HTML(http.StatusOK, "register", nil)
 }
 
-func registerHandler(w http.ResponseWriter, r *http.Request) {
+func registerHandler(c *gin.Context) {
 	log.Println("registerHandler")
-	r.ParseForm()
-	username := r.PostFormValue("username")
-	password := r.PostFormValue("password")
+	username := c.PostForm("username")
+	password := c.PostForm("password")
 	if username != "" && password != "" { // FIXME: need better validation
 		log.Println(username, password)
-		// TODO: add (username, hash) to DB
-		rootHandler(w, r)
+		// TODO: add [username, hash] to DB
+		rootHandler(c)
 	} else {
-		tmpl := template.Must(template.ParseFiles("assets/register.html"))
-		tmpl.ExecuteTemplate(w, "index", "An error occurred. Try again.") // TODO: send better errors
+		c.HTML(http.StatusBadRequest, "register", "An error occurred. Try again.") // TODO: send better errors)
 	}
 }
 
 func main() {
-	r := chi.NewRouter()
-	r.Get("/", rootHandler)
-	r.Get("/play/{bookName}/{pageNumber}", playHandler)
-	r.Get("/register", registerFormHandler)
-	r.Post("/register", registerHandler)
-	r.NotFound(badRouteHandler)
+	r := gin.Default()
+	r.LoadHTMLGlob("assets/*")
+	r.GET("/", rootHandler)
+	r.GET("/play/:bookName/:pageNumber", playHandler)
+	r.GET("/register", registerFormHandler)
+	r.POST("/register", registerHandler)
+	r.NoMethod(badRouteHandler)
+	r.NoRoute(badRouteHandler)
 
 	// Testing SQLite
 	db, err := sql.Open("sqlite3", "app.db")
@@ -132,7 +131,7 @@ func main() {
 	checkPassword(passwd, string(hash))
 
 	log.Println("Server is starting...")
-	checkError(http.ListenAndServe(":8080", r))
+	r.Run(":8080")
 }
 
 func checkError(err error) {
