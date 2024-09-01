@@ -10,7 +10,8 @@
     <br>
     {{ if . }}
         <div class="alert alert-danger" id="error">
-            {{ . }}
+            Error: {{ . }}
         </div>
     {{ end }}
+    {{ template "homeButton" }}
 </div>

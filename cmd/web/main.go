@@ -87,17 +87,30 @@ func registerFormHandler(c *gin.Context) {
 func registerHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
-	if username != "" && password != "" { // FIXME: need better validation
+	if username != "" && password != "" {
 		log.Println(username, password)
-		// TODO: add [username, hash] to DB
-		rootHandler(c)
+		rows, err := db.Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
+		checkError(err)
+		defer rows.Close()
+		if rows.Next() { // username already exists
+			c.HTML(http.StatusBadRequest, "register.html", "Username already exists.")
+		} else {
+			hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+			checkError(err)
+			checkPassword(password, string(hash))
+			db.Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+			rootHandler(c)
+		}
 	} else {
-		c.HTML(http.StatusBadRequest, "register.html", "An error occurred. Try again.") // TODO: send better errors)
+		c.HTML(http.StatusBadRequest, "register.html", "Fields should not be empty.")
 	}
 }
 
+var db *sql.DB
+
 func main() {
 	r := gin.Default()
+	r.SetTrustedProxies(nil)
 	r.LoadHTMLGlob("templates/*.html")
 	r.GET("/", rootHandler)
 	r.GET("/play/:bookName/:pageNumber", playHandler)
@@ -106,31 +119,24 @@ func main() {
 	r.NoMethod(badRouteHandler)
 	r.NoRoute(badRouteHandler)
 
-	// Testing SQLite
-	db, err := sql.Open("sqlite3", "app.db")
+	var err error
+	db, err = sql.Open("sqlite3", "app.db")
 	checkError(err)
-	rows, err := db.Query("SELECT * FROM USER;")
-	checkError(err)
-	defer rows.Close()
-	for rows.Next() {
-		var name, h string
-		checkError(rows.Scan(&name, &h))
-		log.Println(name, h)
-		checkPassword("asd123", h)
-	}
-
-	// Testing bcrypt
-	passwd := "HelloWorld!"
-	hash, err := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.MinCost)
-	checkError(err)
-	checkPassword(passwd, string(hash))
+	// rows, err := db.Query("SELECT * FROM USER;")
+	// checkError(err)
+	// defer rows.Close()
+	// for rows.Next() {
+	// 	var name, h string
+	// 	checkError(rows.Scan(&name, &h))
+	// 	log.Println(name, h)
+	// }
 
 	r.Run(":8080")
 }
 
 func checkError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
 
@@ -138,6 +144,6 @@ func checkPassword(passwd string, hash string) {
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(passwd)); err == nil {
 		log.Println("Password and hash comparison successful!")
 	} else {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
