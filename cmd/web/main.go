@@ -6,14 +6,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type DataListGames struct {
-	UserGames   []string
-	OthersGames []string
+type DataHome struct {
+	Username  string
+	UserGames []string
+	AllGames  []string
 }
 
 type DataCurrentGame struct {
@@ -35,9 +37,11 @@ type Option struct {
 	Destination string
 }
 
-var dataListGames = DataListGames{
-	UserGames:   []string{"ASD", "BASD", "CASD"},
-	OthersGames: []string{"OSD", "BOSD", "COSD"},
+var allGames = []string{"ASD", "BASD", "CASD", "OSD", "BOSD", "COSD"}
+
+var gamesByUser = map[string][]string{
+	"asd": {"ASD", "BASD", "CASD"},
+	"zxc": {"OSD", "BOSD", "COSD"},
 }
 
 var books = map[string]Book{
@@ -57,10 +61,6 @@ var dataPage = Page{
 		{"Go back to page 1", "1"},
 		{"Go back to page 3", "3"},
 	},
-}
-
-func rootHandler(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", dataListGames)
 }
 
 func playHandler(c *gin.Context) {
@@ -90,15 +90,29 @@ func registerHandler(c *gin.Context) {
 	if username != "" && password != "" {
 		log.Println(username, password)
 		rows, err := db.Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
-		checkError(err)
+		if err != nil {
+			log.Println(err)
+			c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
+			return
+		}
 		defer rows.Close()
 		if rows.Next() { // username already exists
 			c.HTML(http.StatusBadRequest, "register.html", "Username already exists.")
 		} else {
 			hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-			checkError(err)
+			if err != nil {
+				log.Println(err)
+				c.HTML(http.StatusInternalServerError, "register.html", "Password too long.")
+				return
+			}
 			checkPassword(password, string(hash))
-			db.Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+			result, err := db.Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+			if err != nil {
+				log.Println(err)
+				c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
+				return
+			}
+			log.Println(result)
 			rootHandler(c)
 		}
 	} else {
@@ -106,7 +120,72 @@ func registerHandler(c *gin.Context) {
 	}
 }
 
+func loginFormHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "login.html", nil)
+}
+
+func loginHandler(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	if username != "" && password != "" {
+		log.Println(username, password)
+		var hash string
+		err := db.QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
+		if err != nil {
+			log.Println(err)
+			c.HTML(http.StatusInternalServerError, "login.html", "Database error. Try again later.")
+			return
+		}
+		if checkPassword(password, hash) {
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"sub": username,
+			})
+			tokenString, err := token.SignedString(secretkey)
+			if err != nil {
+				log.Println(err)
+				c.HTML(http.StatusInternalServerError, "login.html", "Server error. Try again later.")
+				return
+			}
+			c.SetCookie("token", tokenString, 34560000, "/", "localhost", false, true)
+			c.Set("username", username)
+			rootHandler(c)
+		} else {
+			c.HTML(http.StatusBadRequest, "login.html", "Password is incorrect. Try again.")
+		}
+	} else {
+		c.HTML(http.StatusBadRequest, "login.html", "Fields should not be empty.")
+	}
+}
+
+func rootHandler(c *gin.Context) {
+	var data DataHome
+	data.AllGames = allGames
+	var username string
+	usernameFromContext, exists := c.Get("username")
+	if exists {
+		username = usernameFromContext.(string)
+	} else {
+		tokenString, err := c.Cookie("token")
+		if err == nil {
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				return secretkey, nil
+			})
+			if err == nil {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+					username = claims["sub"].(string)
+				}
+			}
+		}
+	}
+	if username != "" {
+		data.Username = username
+		data.UserGames = gamesByUser[username]
+	}
+	c.HTML(http.StatusOK, "index.html", data)
+}
+
 var db *sql.DB
+var secretkey []byte = []byte("gransecreto")
 
 func main() {
 	r := gin.Default()
@@ -116,12 +195,14 @@ func main() {
 	r.GET("/play/:bookName/:pageNumber", playHandler)
 	r.GET("/register", registerFormHandler)
 	r.POST("/register", registerHandler)
+	r.GET("/login", loginFormHandler)
+	r.POST("/login", loginHandler)
 	r.NoMethod(badRouteHandler)
 	r.NoRoute(badRouteHandler)
 
 	var err error
 	db, err = sql.Open("sqlite3", "app.db")
-	checkError(err)
+	exitIfError(err)
 	// rows, err := db.Query("SELECT * FROM USER;")
 	// checkError(err)
 	// defer rows.Close()
@@ -134,16 +215,18 @@ func main() {
 	r.Run(":8080")
 }
 
-func checkError(err error) {
+func exitIfError(err error) {
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
 
-func checkPassword(passwd string, hash string) {
+func checkPassword(passwd string, hash string) bool {
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(passwd)); err == nil {
 		log.Println("Password and hash comparison successful!")
+		return true
 	} else {
 		log.Println(err)
+		return false
 	}
 }

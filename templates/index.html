@@ -13,27 +13,15 @@
 </head>
 <body class="container bg-dark text-white" id="main">
     <h2 class="text-center">Create your Destiny</h2>
-    <div class="text-center">
-        <button hx-get="/register" hx-target="#main" class="btn btn-primary">Register</button>
-    </div>
     <div>
         <div class="row">
             <div class="col-6">
-                <h5 class="text-center">Your games</h5>
-                <div>
-                    {{ range .UserGames }}
-                        <div>
-                            <button hx-target="#main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
-                            <button class="btn btn-primary">Edit</button>
-                            {{ . }} 
-                        </div>
-                    {{ end }}
-                </div>
+                {{ template "userGames" . }}
             </div>
             <div class="col-6">
-                <h5 class="text-center">Games from others</h5>
+                <h5 class="text-center">All games</h5>
                 <div>
-                    {{ range .OthersGames }}
+                    {{ range .AllGames }}
                         <div>
                             <button hx-target="#main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
                             {{ . }} 

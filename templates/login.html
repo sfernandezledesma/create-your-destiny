@@ -1,0 +1,17 @@
+<div class="container p-5 text-center">
+    <h2>Log in</h2>
+    <form hx-post="/login" hx-target="body">
+        <label for="username">Name</label><br>
+        <input type="text" id="username" name="username" placeholder="Your name here" required><br>
+        <label for="password">Password</label><br>
+        <input type="password" id="password" name="password" placeholder="Your password here" required><br><br>
+        <input class=" btn btn-success" type="submit" value="Log in">
+    </form>
+    <br>
+    {{ if . }}
+        <div class="alert alert-danger">
+            {{ . }}
+        </div>
+    {{ end }}
+    {{ template "homeButton" }}
+</div>
