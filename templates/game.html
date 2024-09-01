@@ -1,0 +1,15 @@
+<div id="game" class="container p-5">
+    <h4 class="text-center">{{ .Name }}</h4>
+    <div>
+        <p>{{ .Page.Text }}</p>
+    </div>
+    <div>
+        <div class="d-grid gap-3">
+            {{ range .Page.Options }}
+                <button hx-target="#main" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+                    {{ .Text }}
+                </button>
+            {{ end }}
+        </div>
+    </div>
+</div>

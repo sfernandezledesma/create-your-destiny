@@ -60,36 +60,31 @@ var dataPage = Page{
 }
 
 func rootHandler(c *gin.Context) {
-	log.Println("rootHandler")
-	c.HTML(http.StatusOK, "index", dataListGames)
+	c.HTML(http.StatusOK, "index.html", dataListGames)
 }
 
 func playHandler(c *gin.Context) {
-	log.Println("playHandler")
 	bookName := c.Param("bookName")
 	pageNumber := c.Param("pageNumber")
 	page, ok := books[bookName].Pages[pageNumber]
 	if ok {
 		data := DataCurrentGame{Name: bookName, Page: page}
-		c.HTML(http.StatusOK, "game", data)
+		c.HTML(http.StatusOK, "game.html", data)
 	} else {
 		badRouteHandler(c)
 	}
 }
 
 func badRouteHandler(c *gin.Context) {
-	log.Println("badRouteHandler")
 	c.Header("HX-Retarget", "body")
-	c.HTML(http.StatusNotFound, "notfound", nil)
+	c.HTML(http.StatusNotFound, "notfound.html", nil)
 }
 
 func registerFormHandler(c *gin.Context) {
-	log.Println("registerFormHandler")
-	c.HTML(http.StatusOK, "register", nil)
+	c.HTML(http.StatusOK, "register.html", nil)
 }
 
 func registerHandler(c *gin.Context) {
-	log.Println("registerHandler")
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	if username != "" && password != "" { // FIXME: need better validation
@@ -97,13 +92,13 @@ func registerHandler(c *gin.Context) {
 		// TODO: add [username, hash] to DB
 		rootHandler(c)
 	} else {
-		c.HTML(http.StatusBadRequest, "register", "An error occurred. Try again.") // TODO: send better errors)
+		c.HTML(http.StatusBadRequest, "register.html", "An error occurred. Try again.") // TODO: send better errors)
 	}
 }
 
 func main() {
 	r := gin.Default()
-	r.LoadHTMLGlob("assets/*")
+	r.LoadHTMLGlob("templates/*.html")
 	r.GET("/", rootHandler)
 	r.GET("/play/:bookName/:pageNumber", playHandler)
 	r.GET("/register", registerFormHandler)
@@ -130,7 +125,6 @@ func main() {
 	checkError(err)
 	checkPassword(passwd, string(hash))
 
-	log.Println("Server is starting...")
 	r.Run(":8080")
 }
 
