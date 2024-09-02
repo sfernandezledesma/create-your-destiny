@@ -1,4 +1,4 @@
-package api
+package auth
 
 import (
 	"log"
@@ -7,40 +7,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/sfernandezledesma/create-your-destiny/internal/config"
 	"github.com/sfernandezledesma/create-your-destiny/internal/database"
 	"github.com/sfernandezledesma/create-your-destiny/internal/game"
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func playHandler(c *gin.Context) {
-	gameName := c.Param("gameName")
-	pageNumber := c.Param("pageNumber")
-	page, ok := game.Games[gameName].Pages[pageNumber]
-	if ok {
-		data := game.DataCurrentGame{Name: gameName, Page: page}
-		c.HTML(http.StatusOK, "game.html", data)
-	} else {
-		badRouteHandler(c)
-	}
-}
-
-func badRouteHandler(c *gin.Context) {
-	c.Header("HX-Retarget", "body")
-	c.HTML(http.StatusNotFound, "notfound.html", nil)
-}
-
-func registerFormHandler(c *gin.Context) {
+func RegisterFormHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "register.html", nil)
 }
 
-func registerHandler(c *gin.Context) {
+func RegisterHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	if username != "" && password != "" {
-		log.Println(username, password)
 		rows, err := database.GetDB().Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
 		if err != nil {
 			log.Println(err)
@@ -58,29 +39,27 @@ func registerHandler(c *gin.Context) {
 				return
 			}
 			utils.CheckPassword(password, string(hash))
-			result, err := database.GetDB().Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+			_, err = database.GetDB().Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
 			if err != nil {
 				log.Println(err)
 				c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
 				return
 			}
-			log.Println(result)
-			rootHandler(c)
+			game.RootHandler(c)
 		}
 	} else {
 		c.HTML(http.StatusBadRequest, "register.html", "Fields should not be empty.")
 	}
 }
 
-func loginFormHandler(c *gin.Context) {
+func LoginFormHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", nil)
 }
 
-func loginHandler(c *gin.Context) {
+func LoginHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	if username != "" && password != "" {
-		log.Println(username, password)
 		var hash string
 		err := database.GetDB().QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
 		if err != nil { // this is probably because the user doesn't exist (no rows error)
@@ -100,7 +79,7 @@ func loginHandler(c *gin.Context) {
 			}
 			c.SetCookie("token", tokenString, 34560000, "/", "localhost", false, true)
 			c.Set("username", username)
-			rootHandler(c)
+			game.RootHandler(c)
 		} else {
 			c.HTML(http.StatusBadRequest, "login.html", "Password is incorrect. Try again.")
 		}
@@ -109,34 +88,7 @@ func loginHandler(c *gin.Context) {
 	}
 }
 
-func rootHandler(c *gin.Context) {
-	var data game.DataHome
-	data.AllGames = game.AllGames
-	var username string
-	usernameFromContext, exists := c.Get("username")
-	if exists {
-		username = usernameFromContext.(string)
-	} else {
-		tokenString, err := c.Cookie("token")
-		if err == nil {
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				return config.GetJWTSecret(), nil
-			})
-			if err == nil {
-				if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-					username = claims["sub"].(string)
-				}
-			}
-		}
-	}
-	if username != "" {
-		data.Username = username
-		data.UserGames = game.GamesByUser[username]
-	}
-	c.HTML(http.StatusOK, "index.html", data)
-}
-
-func gameOwnerMiddleware(c *gin.Context) {
+func GameOwnerMiddleware(c *gin.Context) {
 	gameName := c.Param("gameName")
 
 	// Check if the user is logged in and retrieve username
@@ -169,10 +121,4 @@ func gameOwnerMiddleware(c *gin.Context) {
 
 	// If everything is fine, proceed to the next handler
 	c.Next()
-}
-
-func editGameHandler(c *gin.Context) {
-	gameName := c.Param("gameName")
-	// TODO: send game data to edit
-	c.HTML(http.StatusOK, "edit.html", gameName)
 }
