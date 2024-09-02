@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +24,7 @@ type DataCurrentGame struct {
 	Page Page
 }
 
-type Book struct {
+type Game struct {
 	Pages map[string]Page
 }
 
@@ -44,7 +45,7 @@ var gamesByUser = map[string][]string{
 	"zxc": {"OSD", "BOSD", "COSD"},
 }
 
-var books = map[string]Book{
+var games = map[string]Game{
 	"ASD": {Pages: map[string]Page{
 		"1": dataPage,
 		"2": {
@@ -64,11 +65,11 @@ var dataPage = Page{
 }
 
 func playHandler(c *gin.Context) {
-	bookName := c.Param("bookName")
+	gameName := c.Param("gameName")
 	pageNumber := c.Param("pageNumber")
-	page, ok := books[bookName].Pages[pageNumber]
+	page, ok := games[gameName].Pages[pageNumber]
 	if ok {
-		data := DataCurrentGame{Name: bookName, Page: page}
+		data := DataCurrentGame{Name: gameName, Page: page}
 		c.HTML(http.StatusOK, "game.html", data)
 	} else {
 		badRouteHandler(c)
@@ -184,6 +185,49 @@ func rootHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", data)
 }
 
+func gameOwnerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		gameName := c.Param("gameName")
+
+		// Check if the user is logged in and retrieve username
+		var username string
+		tokenString, err := c.Cookie("token")
+		if err == nil {
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				return secretkey, nil
+			})
+			if err == nil {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+					username = claims["sub"].(string)
+					c.Set("username", username)
+				}
+			}
+		}
+
+		if username == "" {
+			c.HTML(http.StatusUnauthorized, "errorPage", "Unauthorized")
+			c.Abort()
+			return
+		}
+
+		// Check if the user is the owner of the game, gameName is unique
+		if !slices.Contains(gamesByUser[username], gameName) {
+			c.HTML(http.StatusForbidden, "errorPage", "Forbidden")
+			c.Abort()
+			return
+		}
+
+		// If everything is fine, proceed to the next handler
+		c.Next()
+	}
+}
+
+func editGameHandler(c *gin.Context) {
+	gameName := c.Param("gameName")
+	// TODO: send game data to edit
+	c.HTML(http.StatusOK, "edit.html", gameName)
+}
+
 var db *sql.DB
 var secretkey []byte = []byte("gransecreto")
 
@@ -192,11 +236,12 @@ func main() {
 	r.SetTrustedProxies(nil)
 	r.LoadHTMLGlob("templates/*.html")
 	r.GET("/", rootHandler)
-	r.GET("/play/:bookName/:pageNumber", playHandler)
 	r.GET("/register", registerFormHandler)
 	r.POST("/register", registerHandler)
 	r.GET("/login", loginFormHandler)
 	r.POST("/login", loginHandler)
+	r.GET("/play/:gameName/:pageNumber", playHandler)
+	r.GET("/edit/:gameName", gameOwnerMiddleware(), editGameHandler)
 	r.NoMethod(badRouteHandler)
 	r.NoRoute(badRouteHandler)
 

@@ -5,3 +5,12 @@
     </button>
 </div>
 {{ end }}
+
+{{ define "errorPage" }}
+<div class="container p-5">
+    <div class="alert alert-danger">
+        {{ . }}
+    </div>
+    {{ template "homeButton" }}
+</div>
+{{ end }}
