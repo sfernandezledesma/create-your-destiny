@@ -8,11 +8,13 @@ import (
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
 
-var SecretKey []byte = []byte("gransecreto")
-var DB *sql.DB
+var db *sql.DB
 
-func InitDB() {
-	var err error
-	DB, err = sql.Open("sqlite3", "app.db")
-	utils.ExitIfError(err)
+func GetDB() *sql.DB {
+	if db == nil {
+		var err error
+		db, err = sql.Open("sqlite3", "app.db")
+		utils.ExitIfError(err)
+	}
+	return db
 }

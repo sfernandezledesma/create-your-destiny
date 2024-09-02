@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/sfernandezledesma/create-your-destiny/internal/config"
 	"github.com/sfernandezledesma/create-your-destiny/internal/database"
 	"github.com/sfernandezledesma/create-your-destiny/internal/game"
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
@@ -40,7 +41,7 @@ func registerHandler(c *gin.Context) {
 	password := c.PostForm("password")
 	if username != "" && password != "" {
 		log.Println(username, password)
-		rows, err := database.DB.Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
+		rows, err := database.GetDB().Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
 		if err != nil {
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
@@ -57,7 +58,7 @@ func registerHandler(c *gin.Context) {
 				return
 			}
 			utils.CheckPassword(password, string(hash))
-			result, err := database.DB.Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+			result, err := database.GetDB().Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
 			if err != nil {
 				log.Println(err)
 				c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
@@ -81,7 +82,7 @@ func loginHandler(c *gin.Context) {
 	if username != "" && password != "" {
 		log.Println(username, password)
 		var hash string
-		err := database.DB.QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
+		err := database.GetDB().QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
 		if err != nil { // this is probably because the user doesn't exist (no rows error)
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError, "login.html", "Username doesn't exist.")
@@ -91,7 +92,7 @@ func loginHandler(c *gin.Context) {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"sub": username,
 			})
-			tokenString, err := token.SignedString(database.SecretKey)
+			tokenString, err := token.SignedString(config.GetJWTSecret())
 			if err != nil {
 				log.Println(err)
 				c.HTML(http.StatusInternalServerError, "login.html", "Server error. Try again later.")
@@ -119,7 +120,7 @@ func rootHandler(c *gin.Context) {
 		tokenString, err := c.Cookie("token")
 		if err == nil {
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				return database.SecretKey, nil
+				return config.GetJWTSecret(), nil
 			})
 			if err == nil {
 				if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -143,7 +144,7 @@ func gameOwnerMiddleware(c *gin.Context) {
 	tokenString, err := c.Cookie("token")
 	if err == nil {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return database.SecretKey, nil
+			return config.GetJWTSecret(), nil
 		})
 		if err == nil {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
