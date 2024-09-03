@@ -1,4 +1,4 @@
-package auth
+package api
 
 import (
 	"log"
@@ -6,13 +6,30 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/sfernandezledesma/create-your-destiny/internal/config"
+	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
 	"github.com/sfernandezledesma/create-your-destiny/internal/database"
 	"github.com/sfernandezledesma/create-your-destiny/internal/game"
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func PlayHandler(c *gin.Context) {
+	gameName := c.Param("gameName")
+	pageNumber := c.Param("pageNumber")
+	page, ok := game.Games[gameName].Pages[pageNumber]
+	if ok {
+		data := game.DataCurrentGame{Name: gameName, Page: page}
+		c.HTML(http.StatusOK, "game.html", data)
+	} else {
+		BadRouteHandler(c)
+	}
+}
+
+func EditGameHandler(c *gin.Context) {
+	gameName := c.Param("gameName")
+	// TODO: send game data to edit
+	c.HTML(http.StatusOK, "edit.html", gameName)
+}
 
 func RegisterFormHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "register.html", nil)
@@ -45,7 +62,7 @@ func RegisterHandler(c *gin.Context) {
 				c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
 				return
 			}
-			game.RootHandler(c)
+			RootHandler(c)
 		}
 	} else {
 		c.HTML(http.StatusBadRequest, "register.html", "Fields should not be empty.")
@@ -68,10 +85,7 @@ func LoginHandler(c *gin.Context) {
 			return
 		}
 		if utils.CheckPassword(password, hash) {
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"sub": username,
-			})
-			tokenString, err := token.SignedString(config.GetJWTSecret())
+			tokenString, err := auth.CreateTokenString(username)
 			if err != nil {
 				log.Println(err)
 				c.HTML(http.StatusInternalServerError, "login.html", "Server error. Try again later.")
@@ -79,7 +93,7 @@ func LoginHandler(c *gin.Context) {
 			}
 			c.SetCookie("token", tokenString, 34560000, "/", "localhost", false, true)
 			c.Set("username", username)
-			game.RootHandler(c)
+			RootHandler(c)
 		} else {
 			c.HTML(http.StatusBadRequest, "login.html", "Password is incorrect. Try again.")
 		}
@@ -93,18 +107,7 @@ func GameOwnerMiddleware(c *gin.Context) {
 
 	// Check if the user is logged in and retrieve username
 	var username string
-	tokenString, err := c.Cookie("token")
-	if err == nil {
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return config.GetJWTSecret(), nil
-		})
-		if err == nil {
-			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-				username = claims["sub"].(string)
-				c.Set("username", username)
-			}
-		}
-	}
+	auth.GetUsernameFromContext(&username, c)
 
 	if username == "" {
 		c.HTML(http.StatusUnauthorized, "errorPage", "Unauthorized")
@@ -121,4 +124,21 @@ func GameOwnerMiddleware(c *gin.Context) {
 
 	// If everything is fine, proceed to the next handler
 	c.Next()
+}
+
+func RootHandler(c *gin.Context) {
+	var data game.DataHome
+	data.AllGames = game.AllGames
+	var username string
+	auth.GetUsernameFromContext(&username, c)
+	if username != "" {
+		data.Username = username
+		data.UserGames = game.GamesByUser[username]
+	}
+	c.HTML(http.StatusOK, "index.html", data)
+}
+
+func BadRouteHandler(c *gin.Context) {
+	c.Header("HX-Retarget", "body")
+	c.HTML(http.StatusNotFound, "notfound.html", nil)
 }
