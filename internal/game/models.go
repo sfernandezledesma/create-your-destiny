@@ -7,20 +7,20 @@ type DataHome struct {
 }
 
 type DataCurrentGame struct {
-	Name string
-	Page Page
+	Name  string
+	Scene Scene
 }
 
 type Game struct {
-	Pages map[string]Page
+	Scenes map[string]Scene
 }
 
-type Page struct {
-	Text    string
-	Options []Option
+type Scene struct {
+	Text  string
+	Paths []Path
 }
 
-type Option struct {
+type Path struct {
 	Text        string
 	Destination string
 }
@@ -33,20 +33,25 @@ var GamesByUser = map[string][]string{
 }
 
 var Games = map[string]Game{
-	"ASD": {Pages: map[string]Page{
-		"1": DataPage,
+	"ASD": {Scenes: map[string]Scene{
+		"1": DataScene1,
 		"2": {
-			"This is page 2",
-			[]Option{
-				{"Go back to page 1", "1"},
-			}}}},
+			"This is scene 2",
+			[]Path{
+				{"Go back to scene 1", "1"},
+			}},
+		"3": {
+			"This is scene 3",
+			[]Path{}},
+	},
+	},
 }
 
-var DataPage = Page{
+var DataScene1 = Scene{
 	"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-	[]Option{
-		{"Go to page 2", "2"},
-		{"Go back to page 1", "1"},
-		{"Go back to page 3", "3"},
+	[]Path{
+		{"Go to scene 2", "2"},
+		{"Go to scene 1", "1"},
+		{"Go to scene 3", "3"},
 	},
 }

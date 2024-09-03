@@ -15,10 +15,10 @@ import (
 
 func PlayHandler(c *gin.Context) {
 	gameName := c.Param("gameName")
-	pageNumber := c.Param("pageNumber")
-	page, ok := game.Games[gameName].Pages[pageNumber]
+	sceneNumber := c.Param("sceneNumber")
+	scene, ok := game.Games[gameName].Scenes[sceneNumber]
 	if ok {
-		data := game.DataCurrentGame{Name: gameName, Page: page}
+		data := game.DataCurrentGame{Name: gameName, Scene: scene}
 		c.HTML(http.StatusOK, "game.html", data)
 	} else {
 		BadRouteHandler(c)

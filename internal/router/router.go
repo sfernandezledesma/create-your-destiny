@@ -14,7 +14,7 @@ func NewRouter() *gin.Engine {
 	r.POST("/register", api.RegisterHandler)
 	r.GET("/login", api.LoginFormHandler)
 	r.POST("/login", api.LoginHandler)
-	r.GET("/play/:gameName/:pageNumber", api.PlayHandler)
+	r.GET("/play/:gameName/:sceneNumber", api.PlayHandler)
 	r.GET("/edit/:gameName", api.GameOwnerMiddleware, api.EditGameHandler)
 	r.NoMethod(api.BadRouteHandler)
 	r.NoRoute(api.BadRouteHandler)
