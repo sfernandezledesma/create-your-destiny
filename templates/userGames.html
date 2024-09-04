@@ -1,10 +1,13 @@
 {{ define "userGames" }}
     {{ if .Username }}
+    <div class="text-center">
+        <button hx-get="/createForm" hx-target="body" class="btn btn-primary">Create new game</button>
+    </div>
     <h5 class="text-center">{{ .Username }} games</h5>
     {{ else }}
         <h5 class="text-center">Your games</h5>
     {{ end }}
-    {{ if .UserGames }}
+    {{ if .Username }}
         <div>
             {{ range .UserGames }}
                 <div>
@@ -18,7 +21,7 @@
         <div class="text-center">
             <button hx-get="/login" hx-target="body" class="btn btn-primary">Log in</button>
             or
-            <button hx-get="/register" hx-target="body" class="btn btn-primary">Register</button>
+            <button hx-get="/register" hx-target="body" class="btn btn-primary">Sign up</button>
         </div>
     {{ end }}
 {{ end }}

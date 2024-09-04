@@ -1,7 +1,7 @@
 package main
 
-import "github.com/sfernandezledesma/create-your-destiny/internal/router"
+import "github.com/sfernandezledesma/create-your-destiny/internal/api"
 
 func main() {
-	router.NewRouter().Run(":8080")
+	api.NewRouter().Run(":8080")
 }
