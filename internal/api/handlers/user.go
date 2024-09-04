@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
-	"github.com/sfernandezledesma/create-your-destiny/internal/database"
+	"github.com/sfernandezledesma/create-your-destiny/internal/db"
 )
 
 func RegisterFormHandler(c *gin.Context) {
@@ -17,14 +17,14 @@ func RegisterHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	if username != "" && password != "" {
-		rows, err := database.GetDB().Query("SELECT NAME FROM USER WHERE NAME = ?;", username)
+		// Check if user already exists
+		userExists, err := db.UserExists(username)
 		if err != nil {
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
 			return
 		}
-		defer rows.Close()
-		if rows.Next() { // username already exists
+		if userExists { // username already exists
 			c.HTML(http.StatusBadRequest, "register.html", "Username already exists.")
 		} else {
 			hash, err := auth.CreateHashFromPassword(password)
@@ -33,8 +33,7 @@ func RegisterHandler(c *gin.Context) {
 				c.HTML(http.StatusInternalServerError, "register.html", "Password too long.")
 				return
 			}
-			_, err = database.GetDB().Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
-			if err != nil {
+			if err := db.CreateNewUser(username, hash); err != nil {
 				log.Println(err)
 				c.HTML(http.StatusInternalServerError, "register.html", "Database error. Try again later.")
 				return
@@ -54,8 +53,7 @@ func LoginHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	if username != "" && password != "" {
-		var hash []byte
-		err := database.GetDB().QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
+		hash, err := db.GetUserHash(username)
 		if err != nil { // this is probably because the user doesn't exist (no rows error)
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError, "login.html", "Username doesn't exist.")
