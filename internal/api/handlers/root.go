@@ -11,8 +11,7 @@ import (
 func RootHandler(c *gin.Context) {
 	var data game.DataHome
 	data.AllGames = game.AllGames
-	var username string
-	auth.GetUsernameFromContext(&username, c)
+	username := auth.GetUsernameFromContext(c)
 	if username != "" {
 		data.Username = username
 		data.UserGames = game.GamesByUser[username]

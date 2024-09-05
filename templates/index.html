@@ -11,25 +11,27 @@
     <meta name="htmx-config" content='{"responseHandling": [{"code":".*", "swap": true}]}' /> <!--all responses are swapped-->
     <title>Create your Destiny</title>
 </head>
-<body class="container bg-dark text-white" id="main">
-    <h2 class="text-center">Create your Destiny</h2>
-    <div>
-        <div class="row">
-            <div class="col-6">
-                {{ template "userGames" . }}
-            </div>
-            <div class="col-6">
-                <h5 class="text-center">All games</h5>
-                <div>
-                    {{ range .AllGames }}
-                        <div>
-                            <button hx-target="#main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
-                            {{ . }} 
-                        </div>
-                    {{ end }}
+<body class="bg-dark text-white">
+    {{ template "header" . }}
+    <main class="container">
+        <div>
+            <div class="row">
+                <div class="col-6">
+                    {{ template "userGames" . }}
+                </div>
+                <div class="col-6">
+                    <h5 class="text-center">All games</h5>
+                    <div>
+                        {{ range .AllGames }}
+                            <div>
+                                <button hx-target="main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
+                                {{ . }} 
+                            </div>
+                        {{ end }}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 </body>
 </html>

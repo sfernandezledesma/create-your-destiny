@@ -1,0 +1,14 @@
+{{ define "header" }}
+<header class="container-fluid">
+    <div class="row">
+        <div class="col-6 text-end">
+            <h2>Create your Destiny</h2>
+        </div>
+        <div class="col-6 text-start">
+            {{ if .Username }}
+                <button hx-get="/logout" hx-target="body" class="btn btn-danger">Log out</button>
+            {{ end }}
+        </div>
+    </div>
+</header>
+{{ end }}

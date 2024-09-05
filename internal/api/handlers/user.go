@@ -76,3 +76,9 @@ func LoginHandler(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "login.html", "Fields should not be empty.")
 	}
 }
+
+func LogoutHandler(c *gin.Context) {
+	c.SetCookie("token", "", -1, "/", "localhost", false, true)
+	c.Set("username", "")
+	RootHandler(c)
+}

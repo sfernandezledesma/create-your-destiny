@@ -29,20 +29,22 @@ func CreateTokenString(username string) (string, error) {
 	return tokenString, err
 }
 
-func GetUsernameFromContext(username *string, c *gin.Context) {
+func GetUsernameFromContext(c *gin.Context) string {
+	var username string = ""
 	if usernameFromContext, exists := c.Get("username"); exists {
-		*username = usernameFromContext.(string)
+		username = usernameFromContext.(string)
 	} else {
 		tokenString, err := c.Cookie("token")
-		if err == nil {
+		if err == nil { // FIXME: Should handle errors
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				return GetJWTSecret(), nil
 			})
-			if err == nil {
+			if err == nil { // FIXME: Should handle errors
 				if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-					*username = claims["sub"].(string)
+					username = claims["sub"].(string)
 				}
 			}
 		}
 	}
+	return username
 }

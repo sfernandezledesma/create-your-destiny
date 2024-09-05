@@ -6,7 +6,7 @@
     <div>
         <div class="d-grid gap-3">
             {{ range .Scene.Paths }}
-                <button hx-target="#main" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+                <button hx-target="main" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
                     {{ .Text }}
                 </button>
             {{ end }}

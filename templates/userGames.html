@@ -1,9 +1,9 @@
 {{ define "userGames" }}
     {{ if .Username }}
-    <div class="text-center">
-        <button hx-get="/createForm" hx-target="body" class="btn btn-primary">Create new game</button>
-    </div>
-    <h5 class="text-center">{{ .Username }} games</h5>
+        <div class="text-center">
+            <button hx-get="/createForm" hx-target="body" class="btn btn-primary">Create new game</button>
+        </div>
+        <h5 class="text-center">{{ .Username }} games</h5>
     {{ else }}
         <h5 class="text-center">Your games</h5>
     {{ end }}

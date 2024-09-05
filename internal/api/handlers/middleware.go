@@ -13,8 +13,7 @@ func GameOwnerMiddleware(c *gin.Context) {
 	gameName := c.Param("gameName")
 
 	// Check if the user is logged in and retrieve username
-	var username string
-	auth.GetUsernameFromContext(&username, c)
+	username := auth.GetUsernameFromContext(c)
 
 	if username == "" {
 		c.HTML(http.StatusUnauthorized, "errorPage", "Unauthorized")
