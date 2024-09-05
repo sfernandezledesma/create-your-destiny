@@ -5,11 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sfernandezledesma/create-your-destiny/internal/game"
+	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
 
 func PlayHandler(c *gin.Context) {
 	gameName := c.Param("gameName")
-	sceneNumber := c.Param("sceneNumber")
+	sceneNumber, err := utils.StringToNat(c.Param("sceneNumber"))
+	if err != nil {
+		BadRouteHandler(c)
+		return
+	}
 	scene, ok := game.Games[gameName].Scenes[sceneNumber]
 	if ok {
 		data := game.DataCurrentGame{Name: gameName, Scene: scene}
