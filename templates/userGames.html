@@ -11,8 +11,8 @@
         <div>
             {{ range .UserGames }}
                 <div>
-                    <button hx-target="body" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
-                    <button hx-target="body" hx-get="/edit/{{ . }}" class="btn btn-primary">Edit</button>
+                    {{ template "playButton" . }}
+                    {{ template "editButton" . }}
                     {{ . }} 
                 </div>
             {{ end }}

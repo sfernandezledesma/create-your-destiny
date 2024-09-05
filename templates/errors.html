@@ -1,8 +1,9 @@
-{{ define "homeButton" }}
-<div class="container text-center">
-    <button hx-get="/" hx-target="body" class="btn btn-primary">
-        Home
-    </button>
+{{ define "notFoundPage" }}
+<div class="container p-5">
+    <div class="alert alert-danger text-center">
+        Not found
+    </div>
+    {{ template "homeButton" }}
 </div>
 {{ end }}
 

@@ -1,0 +1,19 @@
+{{ define "homeButton" }}
+<div class="container text-center">
+    <button hx-get="/" hx-target="body" class="btn btn-primary">
+        Home
+    </button>
+</div>
+{{ end }}
+
+{{ define "playButton" }}
+<button hx-target="body" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
+{{ end }}
+
+{{ define "editButton" }}
+<button hx-target="body" hx-get="/edit/{{ . }}" class="btn btn-primary">Edit</button>
+{{ end }}
+
+{{ define "restartButton" }}
+<button hx-target="body" hx-get="/play/{{ . }}/1" class="btn btn-danger text-start">Restart</button>
+{{ end }}

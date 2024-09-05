@@ -4,13 +4,17 @@
         <p>{{ .Scene.Text }}</p>
     </div>
     <div>
-        <div class="d-grid gap-3">
-            {{ range .Scene.Paths }}
-                <button hx-target="main" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
-                    {{ .Text }}
-                </button>
-            {{ end }}
-        </div>
+        {{ if .Scene.Paths }}
+            <div class="d-grid gap-3">
+                {{ range .Scene.Paths }}
+                    <button hx-target="body" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+                        {{ .Text }}
+                    </button>
+                {{ end }}
+            </div>
+        {{ else }}
+            {{ template "restartButton" .Name }}
+        {{ end }}
     </div>
     {{ template "homeButton" }}
 </div>

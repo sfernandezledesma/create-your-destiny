@@ -21,5 +21,5 @@ func RootHandler(c *gin.Context) {
 
 func BadRouteHandler(c *gin.Context) {
 	c.Header("HX-Retarget", "body")
-	c.HTML(http.StatusNotFound, "notfound.html", nil)
+	c.HTML(http.StatusNotFound, "notFoundPage", nil)
 }

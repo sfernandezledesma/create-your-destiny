@@ -24,7 +24,7 @@
                     <div>
                         {{ range .AllGames }}
                             <div>
-                                <button hx-target="main" hx-get="/play/{{ . }}/1" class="btn btn-success">Play</button>
+                                {{ template "playButton" . }}
                                 {{ . }} 
                             </div>
                         {{ end }}
