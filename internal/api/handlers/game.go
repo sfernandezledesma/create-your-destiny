@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
 	"github.com/sfernandezledesma/create-your-destiny/internal/cache"
+	"github.com/sfernandezledesma/create-your-destiny/internal/db"
 	"github.com/sfernandezledesma/create-your-destiny/internal/game"
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
@@ -25,8 +28,27 @@ func PlayHandler(c *gin.Context) {
 	}
 }
 
+func CreateGameHandler(c *gin.Context) { // username was set in LoggedInMiddleware
+	username := auth.GetUsernameFromContext(c) // This shouldn't be "" because user is logged in
+	gameName := c.PostForm("gameName")
+	description := c.PostForm("description")
+	public := false
+	if c.PostForm("public") == "on" {
+		public = true
+	}
+	if gameName == "" {
+		c.HTML(http.StatusBadRequest, "create.html", "Fill the form.")
+		return
+	}
+	if err := db.CreateNewGame(gameName, username, description, public); err != nil {
+		log.Println(err)
+		c.HTML(http.StatusBadRequest, "errorPage", err.Error())
+		return
+	}
+	RootHandler(c)
+}
+
 func CreateFormHandler(c *gin.Context) { // username was set in LoggedInMiddleware
-	// TODO: Everything
 	c.HTML(http.StatusOK, "create.html", nil)
 }
 

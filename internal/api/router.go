@@ -21,6 +21,7 @@ func NewRouter() *gin.Engine {
 	r.GET("/play/:gameName/:sceneNumber", handlers.PlayHandler)
 
 	r.GET("/createForm", handlers.LoggedInMiddleware, handlers.CreateFormHandler)
+	r.POST("/create", handlers.LoggedInMiddleware, handlers.CreateGameHandler)
 	r.GET("/edit/:gameName", handlers.GameOwnerMiddleware, handlers.EditGameHandler)
 
 	r.NoMethod(handlers.BadRouteHandler)

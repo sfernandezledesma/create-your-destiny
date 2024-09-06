@@ -34,11 +34,24 @@ func UserExists(username string) (bool, error) {
 
 func GetUserHash(username string) ([]byte, error) {
 	var hash []byte
-	err := getDB().QueryRow("SELECT HASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
+	err := getDB().QueryRow("SELECT PASSWORDHASH FROM USER WHERE NAME = ?;", username).Scan(&hash)
 	return hash, err
 }
 
 func CreateNewUser(username string, hash []byte) error { // Assumes UserExists(username) == false
-	_, err := getDB().Exec("INSERT INTO USER(NAME, HASH) VALUES(?, ?);", username, hash)
+	_, err := getDB().Exec("INSERT INTO USER(NAME, PASSWORDHASH) VALUES(?, ?);", username, hash)
+	return err
+}
+
+func CreateNewGame(gameName string, author string, description string, public bool) error {
+	rows, err := getDB().Query("SELECT NAME FROM GAME WHERE NAME = ?", gameName)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	if rows.Next() { // game with that name already exists
+		return utils.Error{ErrorString: "Game already exists."}
+	}
+	_, err = getDB().Exec("INSERT INTO GAME(NAME, AUTHOR, DESCRIPTION, PUBLIC) VALUES(?, ?, ?, ?)", gameName, author, description, public)
 	return err
 }

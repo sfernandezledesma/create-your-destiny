@@ -7,6 +7,14 @@ import (
 
 type Nat uint32
 
+type Error struct {
+	ErrorString string
+}
+
+func (e Error) Error() string {
+	return e.ErrorString
+}
+
 func ExitIfError(err error) {
 	if err != nil {
 		log.Fatal(err)

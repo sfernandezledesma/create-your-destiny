@@ -15,3 +15,11 @@
     {{ template "homeButton" }}
 </div>
 {{ end }}
+
+{{ define "errorMessage" }}
+    {{ if . }}
+            <div class="alert alert-danger">
+                {{ . }}
+            </div>
+    {{ end }}
+{{ end }}

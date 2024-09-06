@@ -6,15 +6,15 @@
             <form hx-post="/create" hx-target="body">
                 <div class="mb-3">
                     <label for="gameName" class="form-label">Game name</label>
-                    <input type="text" class="form-control" id="gameName">
+                    <input type="text" class="form-control" name="gameName" id="gameName">
                     <div class="form-text text-white">Should be unique (you can change it later though).</div>
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label">Description (optional)</label>
-                    <input type="text" class="form-control" id="description">
+                    <input type="text" class="form-control" name="description" id="description">
                 </div>
                 <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="public">
+                    <input type="checkbox" class="form-check-input" name="public" id="public">
                     <label class="form-check-label" for="public">Public</label>
                 </div>
                 <button type="submit" class="btn btn-success">Submit</button>
@@ -22,5 +22,6 @@
         </div>
         <div class="col-0 col-sm-2 col-md-3"></div>
     </div>
+    {{ template "errorMessage" . }}
     {{ template "homeButton" }}
 </div>
