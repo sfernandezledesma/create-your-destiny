@@ -6,8 +6,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
-	"github.com/sfernandezledesma/create-your-destiny/internal/game"
+	"github.com/sfernandezledesma/create-your-destiny/internal/cache"
 )
+
+func LoggedInMiddleware(c *gin.Context) {
+	if username := auth.GetUsernameFromContext(c); username == "" {
+		c.HTML(http.StatusUnauthorized, "errorPage", "Unauthorized")
+		c.Abort()
+	} else {
+		c.Set("username", username)
+		c.Next()
+	}
+}
 
 func GameOwnerMiddleware(c *gin.Context) {
 	gameName := c.Param("gameName")
@@ -22,7 +32,7 @@ func GameOwnerMiddleware(c *gin.Context) {
 	}
 
 	// Check if the user is the owner of the game, gameName is unique
-	if !slices.Contains(game.GamesByUser[username], gameName) {
+	if !slices.Contains(cache.GamesByUser[username], gameName) {
 		c.HTML(http.StatusForbidden, "errorPage", "Forbidden")
 		c.Abort()
 		return
