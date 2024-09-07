@@ -42,7 +42,7 @@ func CreateGameHandler(c *gin.Context) { // username was set in LoggedInMiddlewa
 	}
 	if err := db.CreateNewGame(gameName, username, description, public); err != nil {
 		log.Println(err)
-		c.HTML(http.StatusBadRequest, "errorPage", err.Error())
+		c.HTML(http.StatusBadRequest, "create.html", err.Error())
 		return
 	}
 	RootHandler(c)

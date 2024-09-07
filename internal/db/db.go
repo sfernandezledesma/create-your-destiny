@@ -50,7 +50,7 @@ func CreateNewGame(gameName string, author string, description string, public bo
 	}
 	defer rows.Close()
 	if rows.Next() { // game with that name already exists
-		return utils.Error{ErrorString: "Game already exists."}
+		return utils.NewError("Game already exists.")
 	}
 	_, err = getDB().Exec("INSERT INTO GAME(NAME, AUTHOR, DESCRIPTION, PUBLIC) VALUES(?, ?, ?, ?)", gameName, author, description, public)
 	return err

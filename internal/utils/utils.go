@@ -15,6 +15,10 @@ func (e Error) Error() string {
 	return e.ErrorString
 }
 
+func NewError(s string) Error {
+	return Error{ErrorString: s}
+}
+
 func ExitIfError(err error) {
 	if err != nil {
 		log.Fatal(err)
