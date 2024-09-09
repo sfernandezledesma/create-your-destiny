@@ -15,7 +15,7 @@ func InitCache() { // Should be called on server start
 	sceneDataById = make(map[utils.Nat]*models.GameSceneData)
 	gamesByUser = make(map[string][]models.GameData)
 	DB := db.GetDB()
-	var id, sceneNumber utils.Nat
+	var id, sceneNumber, originScene, destScene utils.Nat
 	var name, author, description, text string
 	var public bool
 	rows, err := DB.Query("SELECT ID, NAME, AUTHOR, DESCRIPTION, PUBLIC FROM GAME")
@@ -49,7 +49,15 @@ func InitCache() { // Should be called on server start
 			}
 		}
 	}
-	//TODO: Populate sceneDataById with the PATHS
+	rows.Close()
+	rows, err = DB.Query("SELECT GAMEID, ORIGINSCENE, DESTSCENE, TEXT FROM PATH")
+	if err == nil {
+		for rows.Next() {
+			if err := rows.Scan(&id, &originScene, &destScene, &text); err == nil {
+				sceneDataById[id].Scenes[originScene].Paths = append(sceneDataById[id].Scenes[originScene].Paths, models.NewPath(text, destScene))
+			}
+		}
+	}
 }
 
 func GetAllGamesData() []models.GameData {

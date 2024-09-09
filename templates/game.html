@@ -7,7 +7,7 @@
         {{ if .Scene.Paths }}
             <div class="d-grid gap-3">
                 {{ range .Scene.Paths }}
-                    <button hx-target="body" hx-get="/play/{{ $.Name }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
+                    <button hx-target="body" hx-get="/play/{{ $.Id }}/{{ .Destination }}" class="btn btn-dark btn-block text-start">
                         {{ .Text }}
                     </button>
                 {{ end }}
