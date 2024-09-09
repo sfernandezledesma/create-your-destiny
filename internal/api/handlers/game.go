@@ -8,20 +8,22 @@ import (
 	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
 	"github.com/sfernandezledesma/create-your-destiny/internal/cache"
 	"github.com/sfernandezledesma/create-your-destiny/internal/db"
-	"github.com/sfernandezledesma/create-your-destiny/internal/game"
+	"github.com/sfernandezledesma/create-your-destiny/internal/models"
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
 
 func PlayHandler(c *gin.Context) {
-	gameName := c.Param("gameName")
+	gameId, _ := utils.StringToNat(c.Param("gameId")) // FIXME: Handle error
+	gameData := cache.GetGameDataFromId(gameId)
+	gameName := gameData.Name
 	sceneNumber, err := utils.StringToNat(c.Param("sceneNumber"))
 	if err != nil {
 		BadRouteHandler(c)
 		return
 	}
-	scene, ok := cache.GamesCache[gameName].Scenes[sceneNumber]
+	scene, ok := cache.GetSceneDataFromId(gameId).GetScene(sceneNumber)
 	if ok {
-		data := game.DataCurrentGame{Name: gameName, Scene: scene}
+		data := models.DataCurrentGame{Id: gameId, Name: gameName, Scene: scene}
 		c.HTML(http.StatusOK, "game.html", data)
 	} else {
 		BadRouteHandler(c)
@@ -53,7 +55,7 @@ func CreateFormHandler(c *gin.Context) { // username was set in LoggedInMiddlewa
 }
 
 func EditGameHandler(c *gin.Context) {
-	gameName := c.Param("gameName")
+	gameId := c.Param("gameId")
 	// TODO: send game data to edit
-	c.HTML(http.StatusOK, "edit.html", gameName)
+	c.HTML(http.StatusOK, "edit.html", gameId)
 }

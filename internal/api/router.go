@@ -18,11 +18,11 @@ func NewRouter() *gin.Engine {
 	r.POST("/login", handlers.LoginHandler)
 	r.GET("logout", handlers.LogoutHandler)
 
-	r.GET("/play/:gameName/:sceneNumber", handlers.PlayHandler)
+	r.GET("/play/:gameId/:sceneNumber", handlers.PlayHandler)
 
 	r.GET("/createForm", handlers.LoggedInMiddleware, handlers.CreateFormHandler)
 	r.POST("/create", handlers.LoggedInMiddleware, handlers.CreateGameHandler)
-	r.GET("/edit/:gameName", handlers.GameOwnerMiddleware, handlers.EditGameHandler)
+	r.GET("/edit/:gameId", handlers.GameOwnerMiddleware, handlers.EditGameHandler)
 
 	r.NoMethod(handlers.BadRouteHandler)
 	r.NoRoute(handlers.BadRouteHandler)

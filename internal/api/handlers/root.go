@@ -6,16 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sfernandezledesma/create-your-destiny/internal/auth"
 	"github.com/sfernandezledesma/create-your-destiny/internal/cache"
-	"github.com/sfernandezledesma/create-your-destiny/internal/game"
+	"github.com/sfernandezledesma/create-your-destiny/internal/models"
 )
 
 func RootHandler(c *gin.Context) {
-	var data game.DataHome
-	data.AllGames = cache.AllGames
+	var data models.DataHome
+	data.AllGamesData = cache.GetAllGamesData()
 	username := auth.GetUsernameFromContext(c)
 	if username != "" {
 		data.Username = username
-		data.UserGames = cache.GamesByUser[username]
+		data.UserGamesData = cache.GetUserGamesData(username)
 	}
 	c.HTML(http.StatusOK, "index.html", data)
 }

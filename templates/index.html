@@ -22,10 +22,10 @@
                 <div class="col-6">
                     <h5 class="text-center">All games</h5>
                     <div>
-                        {{ range .AllGames }}
+                        {{ range .AllGamesData }}
                             <div>
                                 {{ template "playButton" . }}
-                                {{ . }} 
+                                {{ .Name }} 
                             </div>
                         {{ end }}
                     </div>

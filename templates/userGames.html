@@ -9,11 +9,11 @@
     {{ end }}
     {{ if .Username }}
         <div>
-            {{ range .UserGames }}
+            {{ range .UserGamesData }}
                 <div>
                     {{ template "playButton" . }}
                     {{ template "editButton" . }}
-                    {{ . }} 
+                    {{ .Name }} 
                 </div>
             {{ end }}
         </div>
