@@ -7,10 +7,11 @@ type GameData struct {
 	Name        string
 	Author      string
 	Description string
+	Public      bool
 }
 
-func NewGameData(id utils.Nat, name string, author string, description string) GameData {
-	return GameData{Id: id, Name: name, Author: author, Description: description}
+func NewGameData(id utils.Nat, name string, author string, description string, public bool) GameData {
+	return GameData{Id: id, Name: name, Author: author, Description: description, Public: public}
 }
 
 type GameSceneData struct {

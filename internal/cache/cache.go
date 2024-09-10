@@ -22,10 +22,8 @@ func InitCache() { // Should be called on server start
 	if err == nil {
 		for rows.Next() {
 			if err := rows.Scan(&id, &name, &author, &description, &public); err == nil {
-				gameData := models.NewGameData(id, name, author, description)
-				if public {
-					gameDataById[id] = gameData
-				}
+				gameData := models.NewGameData(id, name, author, description, public)
+				gameDataById[id] = gameData
 				sceneDataById[id] = new(models.GameSceneData)
 				*sceneDataById[id] = models.NewGameSceneData(id)
 				if gamesByUser[author] == nil {
@@ -60,10 +58,12 @@ func InitCache() { // Should be called on server start
 	}
 }
 
-func GetAllGamesData() []models.GameData {
+func GetAllPublicGamesData() []models.GameData {
 	gamesData := make([]models.GameData, 0, len(gameDataById))
-	for _, v := range gameDataById {
-		gamesData = append(gamesData, v)
+	for _, gameData := range gameDataById {
+		if gameData.Public {
+			gamesData = append(gamesData, gameData)
+		}
 	}
 	return gamesData
 }

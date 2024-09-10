@@ -11,7 +11,7 @@ import (
 
 func RootHandler(c *gin.Context) {
 	var data models.DataHome
-	data.AllGamesData = cache.GetAllGamesData()
+	data.AllGamesData = cache.GetAllPublicGamesData()
 	username := auth.GetUsernameFromContext(c)
 	if username != "" {
 		data.Username = username
