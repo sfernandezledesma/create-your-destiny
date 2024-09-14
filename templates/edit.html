@@ -1,11 +1,30 @@
 <div class="container">
     <h4 class="text-center">Editing {{ .GameData.Name }}</h4>
-    {{ range $key, $value := .GameSceneData.Scenes }}
-    <form hx-target="#response-{{ $key }}" hx-post="/saveScene/{{ $.GameData.Id }}/{{ $key }}">
-        <label for="{{ $key }}">Scene {{ $key }}</label><br>
-        <textarea id="{{ $key }}" name="{{ $key }}" rows="4" cols="50">{{ $value.Text }}</textarea>
+
+    <form hx-post="/saveSettings/{{ .GameData.Id }}" hx-target="#error">
+        <div class="mb-3">
+            <label for="gameName" class="form-label">Game name</label>
+            <input type="text" class="form-control" name="gameName" id="gameName" value="{{.GameData.Name}}">
+            <div class="form-text text-white">Should be unique (you can change it later though).</div>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description (optional)</label>
+            <input type="text" class="form-control" name="description" id="description" value="{{.GameData.Description}}">
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" name="public" id="public" {{ if .GameData.Public }} checked {{ end }}>
+            <label class="form-check-label" for="public">Public</label>
+        </div>
+        <button type="submit" class="btn btn-success">Save game settings</button>
+    </form>
+    <div id="error"></div>
+
+    {{ range $scnNum, $scene := .GameSceneData.Scenes }}
+    <form hx-target="#response-{{ $scnNum }}" hx-post="/saveScene/{{ $.GameData.Id }}/{{ $scnNum }}">
+        <label for="{{ $scnNum }}">Scene {{ $scnNum }}</label><br>
+        <textarea id="{{ $scnNum }}" name="{{ $scnNum }}" rows="4" cols="50">{{ $scene.DBText }}</textarea>
         <button type="submit">Save scene</button>
-        <span id="response-{{ $key }}"></span>
+        <span id="response-{{ $scnNum }}"></span>
     </form>
     {{ end }}
     <div>

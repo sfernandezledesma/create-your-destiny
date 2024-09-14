@@ -6,16 +6,16 @@ import (
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
 
-var gameDataById map[utils.Nat]models.GameData
+var gameDataById map[utils.Nat]*models.GameData
 var sceneDataById map[utils.Nat]*models.GameSceneData
-var gamesByUser map[string][]models.GameData
+var gamesByUser map[string][]*models.GameData
 
 func InitCache() { // Should be called on server start
-	gameDataById = make(map[utils.Nat]models.GameData)
+	gameDataById = make(map[utils.Nat]*models.GameData)
 	sceneDataById = make(map[utils.Nat]*models.GameSceneData)
-	gamesByUser = make(map[string][]models.GameData)
+	gamesByUser = make(map[string][]*models.GameData)
 	DB := db.GetDB()
-	var id, sceneNumber, originScene, destScene utils.Nat
+	var id, sceneNumber utils.Nat
 	var name, author, description, text string
 	var public bool
 	rows, err := DB.Query("SELECT ID, NAME, AUTHOR, DESCRIPTION, PUBLIC FROM GAME")
@@ -23,13 +23,13 @@ func InitCache() { // Should be called on server start
 		for rows.Next() {
 			if err := rows.Scan(&id, &name, &author, &description, &public); err == nil {
 				gameData := models.NewGameData(id, name, author, description, public)
-				gameDataById[id] = gameData
+				gameDataById[id] = &gameData
 				sceneDataById[id] = new(models.GameSceneData)
 				*sceneDataById[id] = models.NewGameSceneData(id)
 				if gamesByUser[author] == nil {
-					gamesByUser[author] = make([]models.GameData, 0, 4)
+					gamesByUser[author] = make([]*models.GameData, 0, 4)
 				}
-				gamesByUser[author] = append(gamesByUser[author], gameData)
+				gamesByUser[author] = append(gamesByUser[author], &gameData)
 			}
 		}
 	}
@@ -41,25 +41,15 @@ func InitCache() { // Should be called on server start
 				if sceneDataById[id].Scenes == nil {
 					sceneDataById[id].Scenes = make(map[utils.Nat]*models.Scene)
 				}
-				newScene := new(models.Scene)
-				newScene.Text = text
-				sceneDataById[id].Scenes[sceneNumber] = newScene
+				sceneDataById[id].Scenes[sceneNumber] = models.NewSceneFromCode(text)
 			}
 		}
 	}
 	rows.Close()
-	rows, err = DB.Query("SELECT GAMEID, ORIGINSCENE, DESTSCENE, TEXT FROM PATH")
-	if err == nil {
-		for rows.Next() {
-			if err := rows.Scan(&id, &originScene, &destScene, &text); err == nil {
-				sceneDataById[id].Scenes[originScene].Paths = append(sceneDataById[id].Scenes[originScene].Paths, models.NewPath(text, destScene))
-			}
-		}
-	}
 }
 
-func GetAllPublicGamesData() []models.GameData {
-	gamesData := make([]models.GameData, 0, len(gameDataById))
+func GetAllPublicGamesData() []*models.GameData {
+	gamesData := make([]*models.GameData, 0, len(gameDataById))
 	for _, gameData := range gameDataById {
 		if gameData.Public {
 			gamesData = append(gamesData, gameData)
@@ -68,11 +58,11 @@ func GetAllPublicGamesData() []models.GameData {
 	return gamesData
 }
 
-func GetGameDataFromId(id utils.Nat) models.GameData {
+func GetGameDataFromId(id utils.Nat) *models.GameData {
 	return gameDataById[id]
 }
 
-func GetUserGamesData(username string) []models.GameData {
+func GetUserGamesData(username string) []*models.GameData {
 	return gamesByUser[username]
 }
 
@@ -86,6 +76,6 @@ func AddNewScene(gameId utils.Nat, newSceneNumber utils.Nat) {
 	sceneDataById[gameId].Scenes[newSceneNumber] = newScene
 }
 
-func UpdateScene(gameId utils.Nat, sceneNumber utils.Nat, newText string) {
-	sceneDataById[gameId].Scenes[sceneNumber].Text = newText
+func UpdateScene(gameId utils.Nat, sceneNumber utils.Nat, newDBText string) {
+	sceneDataById[gameId].Scenes[sceneNumber] = models.NewSceneFromCode(newDBText)
 }

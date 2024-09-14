@@ -1,6 +1,11 @@
 package models
 
-import "github.com/sfernandezledesma/create-your-destiny/internal/utils"
+import (
+	"regexp"
+	"strings"
+
+	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
+)
 
 type GameData struct {
 	Id          utils.Nat
@@ -29,12 +34,28 @@ func NewGameSceneData(gameId utils.Nat) GameSceneData {
 }
 
 type Scene struct {
-	Text  string
-	Paths []Path
+	DBText string
+	Text   string
+	Paths  []Path
 }
 
-func NewScene(text string) Scene {
-	return Scene{Text: text, Paths: make([]Path, 2)}
+func NewSceneFromCode(dbText string) *Scene { // This also instantiates the Paths and add them to the new scene
+	newScene := new(Scene)
+	newScene.DBText = dbText
+	lines := strings.Split(dbText, "\n")
+	re := regexp.MustCompile(`\[(\d+)\] (.+)`)
+	sceneText := ""
+	for _, line := range lines {
+		if match := re.FindSubmatch([]byte(line)); match != nil {
+			pathDestination, _ := utils.StringToNat(string(match[1]))
+			pathText := string(match[2])
+			newScene.addPath(NewPath(pathText, pathDestination))
+		} else {
+			sceneText += (line + "\n")
+		}
+	}
+	newScene.Text = sceneText
+	return newScene
 }
 
 func (s *Scene) addPath(path Path) {
@@ -52,8 +73,8 @@ func NewPath(text string, destination utils.Nat) Path {
 
 type DataHome struct {
 	Username      string
-	UserGamesData []GameData
-	AllGamesData  []GameData
+	UserGamesData []*GameData
+	AllGamesData  []*GameData
 }
 
 type DataCurrentGame struct {

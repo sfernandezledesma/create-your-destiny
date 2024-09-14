@@ -55,6 +55,37 @@ func CreateGameHandler(c *gin.Context) { // username was set in LoggedInMiddlewa
 	RootHandler(c)
 }
 
+func SaveSettings(c *gin.Context) {
+	DB := db.GetDB()
+	gameId, err := utils.StringToNat(c.Param("gameId"))
+	if err != nil {
+		log.Println(err)
+		c.HTML(http.StatusBadRequest, "errorMessage", err.Error())
+		return
+	}
+	gameName := c.PostForm("gameName")
+	description := c.PostForm("description")
+	public := false
+	if c.PostForm("public") == "on" {
+		public = true
+	}
+	if gameName == "" {
+		c.HTML(http.StatusBadRequest, "errorPage", "Name should be filled.")
+		return
+	}
+	_, err = DB.Exec("UPDATE GAME SET NAME=?, DESCRIPTION=?, PUBLIC=? WHERE ID=?", gameName, description, public, gameId)
+	if err != nil {
+		log.Println(err)
+		c.HTML(http.StatusBadRequest, "errorMessage", err.Error())
+	} else {
+		gameData := cache.GetGameDataFromId(gameId)
+		log.Println(gameData)
+		gameData.Name = gameName
+		gameData.Description = description
+		gameData.Public = public
+	}
+}
+
 func CreateFormHandler(c *gin.Context) { // username was set in LoggedInMiddleware
 	c.HTML(http.StatusOK, "create.html", nil)
 }
@@ -63,19 +94,19 @@ func EditGameHandler(c *gin.Context) {
 	gameId, _ := utils.StringToNat(c.Param("gameId"))
 	gameData := cache.GetGameDataFromId(gameId)
 	gameSceneData := cache.GetSceneDataFromId(gameId)
-	c.HTML(http.StatusOK, "edit.html", EditData{GameData: gameData, GameSceneData: gameSceneData})
+	c.HTML(http.StatusOK, "edit.html", EditData{GameData: *gameData, GameSceneData: gameSceneData})
 }
 
 func SaveScene(c *gin.Context) {
 	gameId, _ := utils.StringToNat(c.Param("gameId"))
 	sceneNumber, _ := utils.StringToNat(c.Param("sceneNumber"))
-	newText := c.PostForm(c.Param("sceneNumber"))
-	log.Println(gameId, sceneNumber, newText)
-	_, err := db.GetDB().Exec("UPDATE SCENE SET TEXT=? WHERE GAMEID=? AND SCENENUMBER=?", newText, gameId, sceneNumber)
+	newDBText := c.PostForm(c.Param("sceneNumber"))
+	_, err := db.GetDB().Exec("UPDATE SCENE SET TEXT=? WHERE GAMEID=? AND SCENENUMBER=?", newDBText, gameId, sceneNumber)
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "errorPage", "Could not update scene.")
+	} else {
+		cache.UpdateScene(gameId, sceneNumber, newDBText)
 	}
-	cache.UpdateScene(gameId, sceneNumber, newText)
 }
 
 func NewScene(c *gin.Context) {
@@ -87,6 +118,7 @@ func NewScene(c *gin.Context) {
 	_, err := DB.Exec("INSERT INTO SCENE(GAMEID,SCENENUMBER,TEXT) VALUES(?,?,?)", gameId, newSceneNumber, "")
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "errorPage", "Could not create new scene.")
+	} else {
+		cache.AddNewScene(gameId, newSceneNumber)
 	}
-	cache.AddNewScene(gameId, newSceneNumber)
 }
