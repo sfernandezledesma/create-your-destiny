@@ -79,7 +79,6 @@ func SaveSettings(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "errorMessage", err.Error())
 	} else {
 		gameData := cache.GetGameDataFromId(gameId)
-		log.Println(gameData)
 		gameData.Name = gameName
 		gameData.Description = description
 		gameData.Public = public
