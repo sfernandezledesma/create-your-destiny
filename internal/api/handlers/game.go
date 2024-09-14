@@ -12,6 +12,11 @@ import (
 	"github.com/sfernandezledesma/create-your-destiny/internal/utils"
 )
 
+type EditData struct {
+	GameData      models.GameData
+	GameSceneData models.GameSceneData
+}
+
 func PlayHandler(c *gin.Context) {
 	gameId, _ := utils.StringToNat(c.Param("gameId")) // FIXME: Handle error
 	gameData := cache.GetGameDataFromId(gameId)
@@ -55,7 +60,33 @@ func CreateFormHandler(c *gin.Context) { // username was set in LoggedInMiddlewa
 }
 
 func EditGameHandler(c *gin.Context) {
-	gameId := c.Param("gameId")
-	// TODO: send game data to edit
-	c.HTML(http.StatusOK, "edit.html", gameId)
+	gameId, _ := utils.StringToNat(c.Param("gameId"))
+	gameData := cache.GetGameDataFromId(gameId)
+	gameSceneData := cache.GetSceneDataFromId(gameId)
+	c.HTML(http.StatusOK, "edit.html", EditData{GameData: gameData, GameSceneData: gameSceneData})
+}
+
+func SaveScene(c *gin.Context) {
+	gameId, _ := utils.StringToNat(c.Param("gameId"))
+	sceneNumber, _ := utils.StringToNat(c.Param("sceneNumber"))
+	newText := c.PostForm(c.Param("sceneNumber"))
+	log.Println(gameId, sceneNumber, newText)
+	_, err := db.GetDB().Exec("UPDATE SCENE SET TEXT=? WHERE GAMEID=? AND SCENENUMBER=?", newText, gameId, sceneNumber)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "errorPage", "Could not update scene.")
+	}
+	cache.UpdateScene(gameId, sceneNumber, newText)
+}
+
+func NewScene(c *gin.Context) {
+	gameId, _ := utils.StringToNat(c.Param("gameId"))
+	DB := db.GetDB()
+	var maxSceneNumber int
+	DB.QueryRow("SELECT COUNT(*) FROM SCENE WHERE SCENE.GAMEID = ?", gameId).Scan(&maxSceneNumber)
+	newSceneNumber := utils.Nat(maxSceneNumber + 1)
+	_, err := DB.Exec("INSERT INTO SCENE(GAMEID,SCENENUMBER,TEXT) VALUES(?,?,?)", gameId, newSceneNumber, "")
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "errorPage", "Could not create new scene.")
+	}
+	cache.AddNewScene(gameId, newSceneNumber)
 }

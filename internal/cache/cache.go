@@ -80,26 +80,12 @@ func GetSceneDataFromId(gameId utils.Nat) models.GameSceneData {
 	return *sceneDataById[gameId]
 }
 
-// var GamesCache = map[string]models.Game{
-// 	"ASD": {Scenes: map[utils.Nat]models.Scene{
-// 		1: dataScene1,
-// 		2: {
-// 			Text: "This is scene 2",
-// 			Paths: []models.Path{
-// 				{Text: "Go back to scene 1", Destination: 1},
-// 			}},
-// 		3: {
-// 			Text:  "This is scene 3",
-// 			Paths: []models.Path{}},
-// 	},
-// 	},
-// }
+func AddNewScene(gameId utils.Nat, newSceneNumber utils.Nat) {
+	newScene := new(models.Scene)
+	newScene.Text = ""
+	sceneDataById[gameId].Scenes[newSceneNumber] = newScene
+}
 
-// var dataScene1 = models.Scene{
-// 	Text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-// 	Paths: []models.Path{
-// 		{Text: "Go to scene 2", Destination: 2},
-// 		{Text: "Go to scene 1", Destination: 1},
-// 		{Text: "Go to scene 3", Destination: 3},
-// 	},
-// }
+func UpdateScene(gameId utils.Nat, sceneNumber utils.Nat, newText string) {
+	sceneDataById[gameId].Scenes[sceneNumber].Text = newText
+}

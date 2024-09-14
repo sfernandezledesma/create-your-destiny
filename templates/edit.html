@@ -1,4 +1,17 @@
 <div class="container">
-    <h4 class="text-center">Edit {{ . }}</h4>
+    <h4 class="text-center">Editing {{ .GameData.Name }}</h4>
+    {{ range $key, $value := .GameSceneData.Scenes }}
+    <form hx-target="#response-{{ $key }}" hx-post="/saveScene/{{ $.GameData.Id }}/{{ $key }}">
+        <label for="{{ $key }}">Scene {{ $key }}</label><br>
+        <textarea id="{{ $key }}" name="{{ $key }}" rows="4" cols="50">{{ $value.Text }}</textarea>
+        <button type="submit">Save scene</button>
+        <span id="response-{{ $key }}"></span>
+    </form>
+    {{ end }}
+    <div>
+        <button hx-post="/newScene/{{ .GameData.Id }}">
+            New Scene
+        </button>
+    </div>
     {{ template "homeButton" }}
 </div>
