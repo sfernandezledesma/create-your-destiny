@@ -29,10 +29,10 @@
     </form>
     {{ end }}
     <div id="newScene">
-        <!-- New scene goes here -->
+        <!-- New scene is appended just before this element -->
     </div>
     <div>
-        <button hx-post="/newScene/{{ .GameData.Id }}" hx-target="#newScene">
+        <button hx-post="/newScene/{{ .GameData.Id }}" hx-target="#newScene" hx-swap="beforebegin">
             New Scene
         </button>
     </div>
