@@ -17,6 +17,11 @@ type EditData struct {
 	GameSceneData models.GameSceneData
 }
 
+type NewSceneData struct {
+	GameId      utils.Nat
+	SceneNumber utils.Nat
+}
+
 func PlayHandler(c *gin.Context) {
 	gameId, _ := utils.StringToNat(c.Param("gameId")) // FIXME: Handle error
 	gameData := cache.GetGameDataFromId(gameId)
@@ -93,7 +98,7 @@ func EditGameHandler(c *gin.Context) {
 	gameId, _ := utils.StringToNat(c.Param("gameId"))
 	gameData := cache.GetGameDataFromId(gameId)
 	gameSceneData := cache.GetSceneDataFromId(gameId)
-	c.HTML(http.StatusOK, "edit.html", EditData{GameData: *gameData, GameSceneData: gameSceneData})
+	c.HTML(http.StatusOK, "editPage", EditData{GameData: *gameData, GameSceneData: gameSceneData})
 }
 
 func SaveScene(c *gin.Context) {
@@ -119,5 +124,6 @@ func NewScene(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "errorPage", "Could not create new scene.")
 	} else {
 		cache.AddNewScene(gameId, newSceneNumber)
+		c.HTML(http.StatusAccepted, "newScene", NewSceneData{GameId: gameId, SceneNumber: newSceneNumber})
 	}
 }

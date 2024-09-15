@@ -1,3 +1,4 @@
+{{ define "editPage" }}
 <div class="container">
     <h4 class="text-center">Editing {{ .GameData.Name }}</h4>
 
@@ -27,10 +28,24 @@
         <span id="response-{{ $scnNum }}"></span>
     </form>
     {{ end }}
+    <div id="newScene">
+        <!-- New scene goes here -->
+    </div>
     <div>
-        <button hx-post="/newScene/{{ .GameData.Id }}">
+        <button hx-post="/newScene/{{ .GameData.Id }}" hx-target="#newScene">
             New Scene
         </button>
     </div>
     {{ template "homeButton" }}
 </div>
+{{ end }}
+
+
+{{ define "newScene" }}
+<form hx-target="#response-{{ .SceneNumber }}" hx-post="/saveScene/{{ .GameId }}/{{ .SceneNumber }}">
+    <label for="{{ .SceneNumber }}">Scene {{ .SceneNumber }}</label><br>
+    <textarea id="{{ .SceneNumber }}" name="{{ .SceneNumber }}" rows="4" cols="50"></textarea>
+    <button type="submit">Save scene</button>
+    <span id="response-{{ .SceneNumber }}"></span>
+</form>
+{{ end }}
